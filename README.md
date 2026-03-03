@@ -30,6 +30,8 @@ Validates calculations against Bubble API data. Uses Jest for testing and fetche
    ```
    To run a single suite: `npm test -- {domain}.test.js`
 
+5. **Record a flow (optional)** — Set `BASE_URL` in testConfig, then run `npm run record` to record a user flow with Playwright. Use the recording with Buildprint MCP to generate Jest tests (see [TESTING_GUIDE.md](TESTING_GUIDE.md) Section 11).
+
 ## Documentation
 
 **[TESTING_GUIDE.md](TESTING_GUIDE.md)** is the canonical spec. It defines:
@@ -37,6 +39,7 @@ Validates calculations against Bubble API data. Uses Jest for testing and fetche
 - How `testConfig.js` is structured and populated
 - How to create test files (`tests/{domain}.test.js`)
 - How to create calculator/aggregator modules (`lib/{domain}Calculator.js`)
+- Playwright recording + Buildprint MCP workflow (Section 11)
 - Naming conventions, import paths, and AI agent instructions
 
 When an AI creates a test case for your domain, it follows the schemas and templates in the guide.

@@ -16,6 +16,7 @@ yarn.lock
 
 # Testing
 coverage/
+recordings/
 .nyc_output/
 *.lcov
 

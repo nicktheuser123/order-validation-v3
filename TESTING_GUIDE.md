@@ -26,23 +26,30 @@
 
    To run a single suite: `npm test -- {domain}.test.js`
 
+5. **Record a flow (optional)** — Set `BASE_URL` in testConfig, then run `npm run record` to record a user flow with Playwright. See Section 11.
+
 ---
 
 ## Folder Structure
 
 ```
 order-validation-v3/
-├── testConfig.js           # Dynamically generated - add keys when adding test suites
+├── testConfig.js           # Dynamically generated - add keys when adding test suites; includes BASE_URL
 ├── lib/                    # Calculation logic
 │   ├── testUtils.js        # Shared helpers (getNum, roundTo2) - do not remove
+│   ├── parseBubbleUrl.js   # Parse BASE_URL → { appId, version } for Buildprint MCP
 │   ├── {domain}Calculator.js   # Per-domain: pure calculation from fetched data
 │   └── {domain}Aggregator.js  # Per-domain: aggregate multiple records (optional)
 ├── tests/
 │   └── {domain}.test.js    # One file per domain
+├── scripts/
+│   └── playwright-record.js   # Launches Playwright codegen, saves to recordings/
+├── recordings/            # Playwright recording output (gitignored)
 ├── bubbleClient.js         # Bubble API client - do not modify
 ├── logger.js               # Logging helpers
 ├── jest.config.js
 ├── jest.setup.js
+├── playwright.config.js    # Playwright baseURL from testConfig
 └── TESTING_GUIDE.md        # This file - canonical spec
 ```
 
@@ -51,6 +58,15 @@ order-validation-v3/
 ## 1. testConfig.js Schema
 
 testConfig.js is **dynamically generated**. It starts empty. For **each new test suite** you add, the AI must add the following and export them.
+
+### Global Config (Playwright)
+
+```javascript
+/** Base URL for Playwright recording - where codegen opens the browser */
+const BASE_URL = "";  // e.g. "https://yourapp.bubbleapps.io" or "https://yourapp.bubbleapps.io/version-test"
+```
+
+appId and version for Buildprint MCP are derived from BASE_URL automatically (see Section 11.4).
 
 ### Per-Suite Config Keys
 
@@ -84,6 +100,7 @@ Every config key must be exported:
 
 ```javascript
 module.exports = {
+  BASE_URL,
   RUN_{SUITE}_TESTS,
   {ENTITY}_ID,
   {ENTITY}_IDS,
@@ -95,6 +112,7 @@ When adding a second suite, merge into the exports:
 
 ```javascript
 module.exports = {
+  BASE_URL,
   RUN_ORDER_TESTS,
   ORDER_ID,
   ORDER_IDS,
@@ -432,3 +450,56 @@ The goal is to integrate with Buildprint MCP to:
 3. Run tests via `npm test`
 
 **Design implication:** Calculation modules and config use clear, documented structures so they can be generated or updated by tools. **Name mapping:** Use Section 9 when translating MCP schema output to API-ready type and field names.
+
+---
+
+## 11. Playwright Recording + Buildprint Workflow
+
+Use Playwright codegen to record a user flow, then use Buildprint MCP to discover business logic and generate Jest validation tests.
+
+### 11.1 Prerequisites
+
+- `BASE_URL` in testConfig (must be a Bubble app URL, e.g. `https://yourapp.bubbleapps.io` or `https://yourapp.bubbleapps.io/version-test`)
+- appId and version are derived from BASE_URL automatically; no separate Buildprint env vars
+
+### 11.2 Recording a Flow
+
+1. Set `BASE_URL` in `testConfig.js` to your Bubble app URL
+2. Run `npm run record`
+3. Perform the flow in the browser (e.g. place order, create subscription)
+4. Stop recording; output is saved to `recordings/latest-recording.js`
+
+### 11.3 AI Agent: Creating Tests from a Recording
+
+When the user says "create tests from my recording" or "generate tests from the recording":
+
+1. Read `recordings/latest-recording.js` (or path user provides)
+2. Extract page URLs, actions, and any assertions from the Playwright-generated code (`page.goto(...)`, `page.click(...)`, `page.fill(...)`, `expect(...)`)
+3. Call Buildprint MCP per Section 11.4
+4. Generate Jest test file, calculator/aggregator, and testConfig updates per existing Sections 1–4
+5. Use Section 9 for Data API name mapping
+
+### 11.4 Deriving appId and version + Buildprint MCP Call Sequence
+
+**First:** Call `parseBubbleUrl(testConfig.BASE_URL)` from `lib/parseBubbleUrl.js`. If `appId` is null (custom domain), try `parseBubbleUrl(process.env.BUBBLE_API_BASE)`.
+
+**Bubble URL structure:**
+- `https://[appId].bubbleapps.io` → version `"live"`
+- `https://[appId].bubbleapps.io/version-test` → version `"test"`
+- `https://[appId].bubbleapps.io/version-<id>` → version `"<id>"` (custom branch)
+
+**Buildprint MCP call sequence:**
+
+1. **get_guidelines** with `paths: ["general", "exploring/app"]` at session start
+2. **get_summary** with derived `appId`, `version` — get page names, data types, reusables
+3. **Map recording to pages:** Use URLs from `page.goto()` in the recording to match Buildprint page names
+4. **get_tree** with `include_workflows: true` for matched pages — get workflows triggered by elements
+5. **search_json** to find workflows that write to relevant data types (e.g. Order, Order Item)
+6. **get_json** for workflow/action details — understand calculation logic
+7. **Name mapping:** Use Section 9 rules to convert MCP schema keys to Bubble Data API type names for `testConfig.TYPES` and `bubbleClient` calls
+
+**Recording file schema:** `recordings/latest-recording.js` contains Playwright-generated JS. Extract: URLs from `page.goto()`, selectors from `page.click()`/`page.fill()`, assertions from `expect()`.
+
+### 11.5 AI Instruction
+
+When user says "create tests from my recording" or "generate tests from the recording": follow Section 11.3.
