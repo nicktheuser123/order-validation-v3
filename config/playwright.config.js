@@ -1,4 +1,4 @@
-const { BASE_URL } = require("./testConfig");
+const { BASE_URL } = require("../testConfig");
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 module.exports = {

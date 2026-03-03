@@ -36,7 +36,7 @@ Validates calculations against Bubble API data. Uses Jest for testing and fetche
 
 **[TESTING_GUIDE.md](TESTING_GUIDE.md)** is the canonical spec. It defines:
 
-- How `testConfig.js` is structured and populated
+- How `testConfig.js` is structured and populated (lives at project root; Jest/Playwright configs live in `config/`)
 - How to create test files (`tests/{domain}.test.js`)
 - How to create calculator/aggregator modules (`lib/{domain}Calculator.js`)
 - Playwright recording + Buildprint MCP workflow (Section 11)

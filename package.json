@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Template for building automated tests against Bubble API data. Validate orders, subscriptions, or any data type.",
   "scripts": {
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "test": "jest --config=config/jest.config.js",
+    "test:watch": "jest --watch --config=config/jest.config.js",
     "record": "node scripts/playwright-record.js"
   },
   "keywords": [

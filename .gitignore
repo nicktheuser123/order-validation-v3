@@ -17,6 +17,8 @@ yarn.lock
 # Testing
 coverage/
 recordings/
+test-results.md
+.jest-test-steps.json
 .nyc_output/
 *.lcov
 
