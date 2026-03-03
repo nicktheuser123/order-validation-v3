@@ -177,6 +177,50 @@ beforeAll(async () => {
 - Exact match: `expect(actual).toBe(expected)`
 - Numeric with tolerance: `expect(actual).toBeCloseTo(expected, 2)`
 
+### Jest Execution Order (Critical)
+
+**The `describe` callback runs when the file loads, before `beforeAll`.** Any conditional logic that depends on data fetched in `beforeAll` will execute with initial/empty values.
+
+**Wrong pattern** (causes flaky or incorrect tests):
+
+```javascript
+beforeAll(async () => {
+  items = await searchThings(TYPES.ITEM, constraints);
+}, 120000);
+
+describe("Validation", () => {
+  if (items.length === 0) {
+    it("has no items", () => expect(items).toHaveLength(0));
+    return;
+  }
+  items.forEach((item, i) => {
+    it(`validates item ${i}`, () => { /* ... */ });
+  });
+});
+```
+
+At describe time, `items` is still `[]`, so `items.length === 0` is true. The "no items" test is defined and the `forEach` never runs. Later `beforeAll` populates `items`. The "no items" test then fails because `items` now has data.
+
+**Correct pattern** (evaluate at test runtime, not describe time):
+
+```javascript
+describe("Validation", () => {
+  it("has items to validate", () => {
+    expect(items.length).toBeGreaterThan(0);
+  });
+
+  it("validates field A for all items", () => {
+    items.forEach((item, i) => {
+      expect(getNum(item, "field_a")).toBe(results[i].fieldA);
+    });
+  });
+});
+```
+
+The `items.forEach` runs **inside** the `it` callback, which executes **after** `beforeAll`. At that point `items` is populated.
+
+**Rule:** Do not branch on fetched data at describe-definition time. Use `it()` callbacks that iterate over the data at test execution time.
+
 ---
 
 ## 3. Calculator Module Template
@@ -318,6 +362,7 @@ module.exports = { aggregate{Domain} };
 3. **Create tests/x.test.js** using the test file template, filling in domain-specific fetch logic and assertions
 4. **Create lib/xCalculator.js** (or xAggregator.js if aggregating) using the calculator/aggregator template
 5. **Do not** create config keys or files for domains the user did not request
+6. **Jest execution order:** When validating multiple records (e.g. list of items), do not branch on `items.length` or similar at describe-definition time. Use `it()` callbacks that iterate at test runtime (see Section 2, "Jest Execution Order")
 
 ### When user asks to "add a new assertion to X"
 
