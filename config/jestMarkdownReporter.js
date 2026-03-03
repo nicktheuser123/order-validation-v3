@@ -48,10 +48,10 @@ function formatSteps(steps, fieldCalculations) {
   return lines.join("\n");
 }
 
-function statusEmoji(status) {
-  if (status === "passed") return "Passed";
-  if (status === "failed") return "Failed";
-  if (status === "skipped" || status === "pending" || status === "todo") return "Skipped";
+function statusBadge(status) {
+  if (status === "passed") return "✅ Passed";
+  if (status === "failed") return "❌ Failed";
+  if (status === "skipped" || status === "pending" || status === "todo") return "⏭️ Skipped";
   return status;
 }
 
@@ -77,7 +77,11 @@ class JestMarkdownReporter {
 
     const sections = [];
     sections.push(`# Test Results`);
-    sections.push(`**Run:** ${runDate} | **Status:** ${statusLine}`);
+    sections.push("");
+    sections.push(`| **Run** | **Status** |`);
+    sections.push(`|---------|------------|`);
+    const overallIcon = numFailedTests > 0 ? "❌" : "✅";
+    sections.push(`| ${runDate} | ${overallIcon} ${statusLine} |`);
     sections.push("");
     sections.push("---");
     sections.push("");
@@ -89,35 +93,71 @@ class JestMarkdownReporter {
       return;
     }
 
+    // Summary table
+    sections.push("## Summary");
+    sections.push("");
+    sections.push("| Suite | Passed | Failed | Skipped | Total |");
+    sections.push("|-------|--------|--------|---------|-------|");
+
+    for (const fileResult of testResults) {
+      const firstAncestor = fileResult.testResults[0]?.ancestorTitles?.[0];
+      const suiteTitle = firstAncestor || path.basename(fileResult.testFilePath, ".test.js").replace(/-/g, " ");
+      const passed = fileResult.testResults.filter((t) => t.status === "passed").length;
+      const failed = fileResult.testResults.filter((t) => t.status === "failed").length;
+      const skipped = fileResult.testResults.filter(
+        (t) => t.status === "skipped" || t.status === "pending" || t.status === "todo"
+      ).length;
+      const suiteTotal = fileResult.testResults.length;
+      sections.push(`| ${suiteTitle} | ${passed} | ${failed} | ${skipped} | ${suiteTotal} |`);
+    }
+    sections.push("");
+    sections.push("---");
+    sections.push("");
+
     for (const fileResult of testResults) {
       const firstAncestor = fileResult.testResults[0]?.ancestorTitles?.[0];
       const suiteTitle = firstAncestor || path.basename(fileResult.testFilePath, ".test.js").replace(/-/g, " ");
       sections.push(`## ${suiteTitle}`);
       sections.push("");
+      sections.push("| # | Test Case | Status | Duration |");
+      sections.push("|---|-----------|--------|----------|");
 
+      let rowNum = 1;
       for (const assertion of fileResult.testResults) {
         const { fullName, title, status, failureMessages, duration } = assertion;
+        const statusLabel = statusBadge(status);
+        const durationStr = duration != null ? `${Math.round(duration)}ms` : "—";
+        const titleEscaped = title.replace(/\|/g, "\\|");
+        sections.push(`| ${rowNum} | ${titleEscaped} | ${statusLabel} | ${durationStr} |`);
+        rowNum++;
+      }
+      sections.push("");
+
+      // Steps and errors (expandable detail per test)
+      for (const assertion of fileResult.testResults) {
+        const { fullName, title, status, failureMessages } = assertion;
         const { steps, fieldCalculations } = getStepsForTest(fileResult.testFilePath, fullName);
 
-        const statusLabel = statusEmoji(status);
-        const durationStr = duration != null ? ` (${Math.round(duration)}ms)` : "";
-        sections.push(`### ${title} — ${statusLabel}${durationStr}`);
-        sections.push("");
-
         const stepContent = formatSteps(steps, fieldCalculations);
-        if (stepContent) {
-          sections.push(stepContent);
-          sections.push("");
-        }
+        const hasSteps = stepContent && stepContent.trim().length > 0;
+        const hasError = status === "failed" && failureMessages && failureMessages.length > 0;
 
-        if (status === "failed" && failureMessages && failureMessages.length > 0) {
-          sections.push("**Error:**");
-          for (const msg of failureMessages) {
-            sections.push("```");
-            sections.push(msg.trim());
-            sections.push("```");
-          }
+        if (hasSteps || hasError) {
+          sections.push(`### ${title}`);
           sections.push("");
+          if (hasSteps) {
+            sections.push(stepContent);
+            sections.push("");
+          }
+          if (hasError) {
+            sections.push("**Error:**");
+            for (const msg of failureMessages) {
+              sections.push("```");
+              sections.push(msg.trim());
+              sections.push("```");
+            }
+            sections.push("");
+          }
         }
       }
     }
