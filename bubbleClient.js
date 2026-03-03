@@ -15,7 +15,7 @@ async function getThing(type, id) {
 
 /**
  * Search for records with constraints. Fetches all pages.
- * @param {string} type - Data type name (e.g. "GP_Order", "GP_ReportingDaily")
+ * @param {string} type - Data type name (e.g. "YourOrderType", "YourReportingType")
  * @param {Array} constraints - Array of { key, constraint_type, value }
  * @param {number} limit - Max items per request (default 100)
  * @returns {Promise<Array>} All matching records

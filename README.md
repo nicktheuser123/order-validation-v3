@@ -1,8 +1,8 @@
-# Order Validation
+# Bubble Validation Template
 
 A standardised template to build automated tests for nocode applications.
 
-Validates financial calculations against Bubble API data. Uses Jest for testing and fetches relevant data from the Bubble API.
+Validates calculations against Bubble API data. Uses Jest for testing and fetches relevant data from the Bubble API. Works for orders, subscriptions, or any data type.
 
 ## Prerequisites
 
@@ -11,43 +11,36 @@ Validates financial calculations against Bubble API data. Uses Jest for testing 
 ## Setup
 
 1. **Install dependencies**
-  ```bash
+   ```bash
    npm install
-  ```
+   ```
+
 2. **Environment variables**
-  Copy the example env file and add your Bubble API credentials:
-   Edit `.env` and set:
-3. **Run tests**
-  ```bash
+   - Copy `.env.example` to `.env`
+   - Add your Bubble API credentials: `BUBBLE_API_BASE` and `BUBBLE_API_TOKEN`
+
+3. **Create test suites**
+   - This repo ships with **no test suites** by default.
+   - Ask an AI: "Create a test case for [your domain]" (e.g. orders, subscriptions).
+   - The AI will use the instructions in [TESTING_GUIDE.md](TESTING_GUIDE.md) to add config, create test files, and calculation modules.
+
+4. **Run tests**
+   ```bash
    npm test
-  ```
-   To run tests in watch mode:
+   ```
+   To run a single suite: `npm test -- {domain}.test.js`
 
-## Test suites
+## Documentation
 
-### 1. GP_Order financial validation (`order.test.js`)
+**[TESTING_GUIDE.md](TESTING_GUIDE.md)** is the canonical spec. It defines:
 
-Validates a single order's calculated values against Bubble:
+- How `testConfig.js` is structured and populated
+- How to create test files (`tests/{domain}.test.js`)
+- How to create calculator/aggregator modules (`lib/{domain}Calculator.js`)
+- Naming conventions, import paths, and AI agent instructions
 
-- Ticket count
-- Gross amount
-- Discount amount (flat and percentage)
-- Processing fee revenue and deduction
-- Total order value
-- Service fee
-- Donation amount
-- Custom fees
+When an AI creates a test case for your domain, it follows the schemas and templates in the guide.
 
-### 2. GP_ReportingDaily validation (`reportingDaily.test.js`)
+## Bubble API
 
-Validates that summed `GP_ReportingDaily` entries for a date match the summed values from orders with the same Date Label. Uses the order ID to fetch its Date Label, then fetches all orders and all ReportingDaily entries for that date, sums them, and compares per the workflow mapping.
-
-**Validated fields:** gross_sales, gross_revenue, net_revenue, total_tickets_sold, total_ticket_sales, total_service_fees, net_service_fees, total_fees, net_total_fees, total_processing_fees (revenue & deductions), donations, total_discounts, total_deductions, total_orders_count.
-
-**Configuration:** Update `REPORTING_DAILY_TYPE` in `reportingDaily.test.js` if your Bubble type name differs (e.g. `"ReportingDaily"` instead of `"GP_ReportingDaily"`).
-
-## Configuration
-
-- **Order ID:** Set in `order.test.js` and `reportingDaily.test.js` `beforeAll` hooks.
-- **Bubble API:** See [Data API requests](https://manual.bubble.io/help-guides/integrations/api/the-bubble-api/the-data-api/data-api-requests) for search/constraint format.
-
+See [Data API requests](https://manual.bubble.io/help-guides/integrations/api/the-bubble-api/the-data-api/data-api-requests) for search/constraint format.

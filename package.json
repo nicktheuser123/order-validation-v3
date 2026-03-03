@@ -1,13 +1,12 @@
 {
   "name": "order-validation-v3",
   "version": "1.0.0",
-  "description": "Validates GP_Order financial calculations against Bubble API data",
-  "main": "orderCalculator.js",
+  "description": "Template for building automated tests against Bubble API data. Validate orders, subscriptions, or any data type.",
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch"
   },
-  "keywords": ["order", "validation", "bubble", "jest"],
+  "keywords": ["template", "validation", "bubble", "jest", "subscriptions"],
   "author": "",
   "license": "ISC",
   "engines": {
