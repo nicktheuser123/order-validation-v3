@@ -76,7 +76,7 @@ const TYPES = {
 **Naming rules:**
 - `RUN_{SUITE}_TESTS`: Use the suite name in UPPER_SNAKE_CASE (e.g. `RUN_ORDER_TESTS`, `RUN_SUBSCRIPTION_TESTS`)
 - `{ENTITY}_ID`: The primary Bubble type this suite validates (e.g. `ORDER_ID`, `SUBSCRIPTION_ID`)
-- `TYPES`: Keys are UPPER_SNAKE_CASE; values are the exact Bubble type names from the app
+- `TYPES`: Keys are UPPER_SNAKE_CASE; values must be **Bubble Data API type names** (see Section 9)
 
 ### Module Exports
 
@@ -314,7 +314,7 @@ module.exports = { aggregate{Domain} };
 ### When user asks to "create a test case for X"
 
 1. **Read this guide** for schemas and templates
-2. **Update testConfig.js:** Add `RUN_X_TESTS`, `X_ID`, `TYPES.X` (and related types), export all
+2. **Update testConfig.js:** Add `RUN_X_TESTS`, `X_ID`, `TYPES.X` (and related types), export all. Use **Data API type names** (Section 9)—not Buildprint MCP schema keys.
 3. **Create tests/x.test.js** using the test file template, filling in domain-specific fetch logic and assertions
 4. **Create lib/xCalculator.js** (or xAggregator.js if aggregating) using the calculator/aggregator template
 5. **Do not** create config keys or files for domains the user did not request
@@ -332,7 +332,53 @@ module.exports = { aggregate{Domain} };
 
 ---
 
-## 9. Buildprint MCP Workflow (Future)
+## 9. Bubble Data API vs Buildprint MCP: Name Mapping
+
+**Critical:** The `bubbleClient` calls the **Bubble Data API** (REST). Type names and field names in `testConfig.TYPES` and in test/calculator code must use **Data API names**, not internal schema keys from Buildprint MCP or the app JSON.
+
+### Data API Type Names
+
+The Bubble Data API uses the **data type name as shown in the Bubble database editor**, formatted as:
+
+- **Lowercase**
+- **Spaces removed**
+
+| Editor Name | Data API Type Name |
+|-------------|--------------------|
+| Order | `order` |
+| Order Item | `orderitem` |
+| Rental Unit | `rentalunit` |
+
+**Source:** [Bubble Data API endpoints](https://manual.bubble.io/help-guides/integrations/api/the-bubble-api/the-data-api/data-api-endpoints)
+
+### Buildprint MCP Schema Keys (Do Not Use for API)
+
+Buildprint MCP tools (`get_summary`, `get_json`) return app JSON with **internal schema keys** in paths like `/user_types/cart_items` or `/user_types/order`. These keys (`cart_items`, `order`, etc.) are **not** the Data API type names. They are internal identifiers used by the editor and MCP.
+
+| MCP Path | Internal Key | Data API Name (if editor name = "Order") |
+|----------|--------------|------------------------------------------|
+| /user_types/cart_items | cart_items | `order` |
+| /user_types/order | order | `orderitem` |
+
+### Field Names
+
+Field names in API responses and search constraints follow the same rule: use the **display name from the Bubble editor**, formatted (lowercase, spaces removed). For example, a field "Order_items" in the editor becomes `order_items` in the API.
+
+### Verification
+
+To confirm correct type names for your app:
+
+1. Open the Bubble editor → **Settings** → **API** → **Data**
+2. Inspect the generated endpoint URLs (e.g. `.../obj/order`, `.../obj/orderitem`)
+3. Use those exact type names in `testConfig.TYPES`
+
+### AI Instruction
+
+When using Buildprint MCP to discover schema or workflows: **do not** use MCP path keys (e.g. `cart_items`, `order`) as `TYPES` values. Always derive Data API names from the editor display names using the formatting rule above, or verify against the Bubble API settings.
+
+---
+
+## 10. Buildprint MCP Workflow (Future)
 
 The goal is to integrate with Buildprint MCP to:
 
@@ -340,4 +386,4 @@ The goal is to integrate with Buildprint MCP to:
 2. Generate or update test case calculations from that logic
 3. Run tests via `npm test`
 
-**Design implication:** Calculation modules and config use clear, documented structures so they can be generated or updated by tools.
+**Design implication:** Calculation modules and config use clear, documented structures so they can be generated or updated by tools. **Name mapping:** Use Section 9 when translating MCP schema output to API-ready type and field names.
