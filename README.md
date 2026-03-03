@@ -1,6 +1,8 @@
 # Order Validation
 
-Validates GP_Order financial calculations against Bubble API data. Uses Jest for testing and fetches order, add-on, and event data from the Bubble API.
+A standardised template to build automated tests for nocode applications.
+
+Validates financial calculations against Bubble API data. Uses Jest for testing and fetches relevant data from the Bubble API.
 
 ## Prerequisites
 
@@ -8,44 +10,18 @@ Validates GP_Order financial calculations against Bubble API data. Uses Jest for
 
 ## Setup
 
-1. **Initialize project** (if no `package.json` exists)
-
-   ```bash
-   npm init -y
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install axios dotenv jest
-   ```
-
-3. **Environment variables**
-
-   Copy the example env file and add your Bubble API credentials:
-
-   ```bash
-   cp .env.example .env
-   ```
-
+1. **Install dependencies**
+  ```bash
+   npm install
+  ```
+2. **Environment variables**
+  Copy the example env file and add your Bubble API credentials:
    Edit `.env` and set:
-
-   ```
-   BUBBLE_API_BASE=https://your-bubble-app.bubbleapps.io/api/1.1/obj
-   BUBBLE_API_TOKEN=your-bubble-api-token-here
-   ```
-
-4. **Run tests**
-
-   ```bash
-   npx jest
-   ```
-
+3. **Run tests**
+  ```bash
+   npm test
+  ```
    To run tests in watch mode:
-
-   ```bash
-   npx jest --watch
-   ```
 
 ## Test suites
 
@@ -74,3 +50,4 @@ Validates that summed `GP_ReportingDaily` entries for a date match the summed va
 
 - **Order ID:** Set in `order.test.js` and `reportingDaily.test.js` `beforeAll` hooks.
 - **Bubble API:** See [Data API requests](https://manual.bubble.io/help-guides/integrations/api/the-bubble-api/the-data-api/data-api-requests) for search/constraint format.
+

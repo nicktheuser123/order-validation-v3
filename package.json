@@ -1,0 +1,23 @@
+{
+  "name": "order-validation-v3",
+  "version": "1.0.0",
+  "description": "Validates GP_Order financial calculations against Bubble API data",
+  "main": "orderCalculator.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "keywords": ["order", "validation", "bubble", "jest"],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=14"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
